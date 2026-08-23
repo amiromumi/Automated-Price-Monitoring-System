@@ -45,6 +45,12 @@ Bash scripts + Python JSON parsing
 │       ├── tether_alert.sh   # Buy-zone transition monitor
 │       ├── README.md
 │       └── README-fa.md
+├── Windows/
+│   └── usdt/
+│       ├── tether_price.ps1
+│       ├── tether_alert.ps1
+│       ├── README.md
+│       └── README-fa.md
 ├── README.md
 └── README-fa.md
 ```

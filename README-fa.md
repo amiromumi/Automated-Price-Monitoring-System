@@ -45,6 +45,12 @@ Ramzinex REST API
 │       ├── tether_alert.sh   # مانیتور ورود و خروج از محدوده خرید
 │       ├── README.md
 │       └── README-fa.md
+├── Windows/
+│   └── usdt/
+│       ├── tether_price.ps1
+│       ├── tether_alert.ps1
+│       ├── README.md
+│       └── README-fa.md
 ├── README.md
 └── README-fa.md
 ```

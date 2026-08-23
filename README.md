@@ -1,43 +1,110 @@
 # Automated Price Monitoring System
 
-A professional, modular system designed to track asset prices in real-time and deliver automated alerts via Telegram and Desktop notifications. This project demonstrates the integration of system-level automation (Cron), API consumption, and cross-platform notification delivery.
+A lightweight, modular automation project for monitoring market prices and sending remote Telegram alerts plus local Linux desktop notifications. The current implementation tracks USDT/IRR using the Ramzinex public API and is structured so additional assets and operating systems can be added later.
 
-## 🚀 Features
-- **Real-time Tracking**: Fetches live data from reliable exchange APIs.
-- **Dual-Channel Alerts**: Sends notifications via Telegram Bot API and native Linux desktop alerts (`libnotify`).
-- **Autonomous Scheduling**: Fully automated execution using `cron` for zero-maintenance monitoring.
-- **Modular Architecture**: Structured to easily support new assets (Gold, BTC, ETH) and different operating systems (Linux, Windows).
+[راهنمای فارسی](README-fa.md)
 
-## 📂 Project Structure
+## Features
+
+- Live USDT buy/sell prices and 24-hour percentage change
+- Scheduled price reports
+- Configurable buy-zone monitoring
+- Telegram Bot API notifications
+- Linux desktop notifications through `notify-send`
+- State-based alert suppression to avoid repeated buy-zone messages
+- Lightweight Bash and Python implementation with no LLM dependency
+- Modular `operating-system/asset` directory layout
+
+## Architecture
+
+```text
+Ramzinex REST API
+        |
+        v
+Bash scripts + Python JSON parsing
+        |
+        +--> Telegram Bot API (remote alert)
+        |
+        +--> notify-send (local desktop alert)
+        |
+        +--> local state file (duplicate-alert prevention)
 ```
+
+## Repository Structure
+
+```text
 .
-├── Linux/               # Linux implementations
-│   └── usdt/            # Tether (USDT) monitoring suite
-│       ├── tether_price.sh  # General price reporter
-│       ├── tether_alert.sh  # Buy-zone threshold monitor
-│       └── README.md        # Detailed asset-specific docs
-├── Windows/             # Windows implementations (Planned)
-├── README.md            # Main documentation
-└── README-fa.md         # Main documentation (Persian)
+├── Linux/
+│   ├── README.md
+│   ├── README-fa.md
+│   └── usdt/
+│       ├── tether_price.sh   # Regular price report
+│       ├── tether_alert.sh   # Buy-zone transition monitor
+│       ├── README.md
+│       └── README-fa.md
+├── README.md
+└── README-fa.md
 ```
 
-## 🛠️ Technology Stack
-- **Language**: Bash / Shell Scripting
-- **Scheduling**: Cron (Linux)
-- **APIs**: REST APIs (JSON)
-- **Notifications**: Telegram Bot API, `notify-send` (libnotify)
+## Technology Stack
 
-## ⚡ Quick Start (Linux - USDT)
+- Bash / Shell scripting
+- Python 3 for JSON parsing
+- `curl` for HTTP requests
+- Cron-compatible scheduling
+- Telegram Bot API
+- `libnotify` / `notify-send`
 
-If you want to get the USDT monitor running quickly:
+## Quick Start
 
-1. **Clone the repo** and navigate to the USDT folder:
-   `cd Linux/usdt`
-2. **Set up the scripts**:
-   `mkdir -p ~/scripts && cp tether_*.sh ~/scripts/ && chmod +x ~/scripts/tether_*.sh`
-3. **Configure**: Edit the scripts to add your `BOT_TOKEN` and `CHAT_ID`.
-4. **Schedule**: 
-   - For hourly updates: Add `0 * * * * /home/yourusername/scripts/tether_price.sh` to your `crontab -e`.
-   - For buy-zone alerts: Add `*/2 * * * * /home/yourusername/scripts/tether_alert.sh` to your `crontab -e`.
+```bash
+git clone https://github.com/amiromumi/Automated-Price-Monitoring-System.git
+cd Automated-Price-Monitoring-System/Linux/usdt
+mkdir -p "$HOME/scripts"
+cp tether_price.sh tether_alert.sh "$HOME/scripts/"
+chmod +x "$HOME/scripts/tether_price.sh" "$HOME/scripts/tether_alert.sh"
+```
 
-For a detailed guide, please refer to `Linux/usdt/README.md`.
+Edit both copied scripts and replace `YOUR_BOT_TOKEN` and `YOUR_CHAT_ID`. If no SOCKS proxy is required, remove the `--proxy "$PROXY"` option or adapt the proxy configuration.
+
+Test before scheduling:
+
+```bash
+bash "$HOME/scripts/tether_price.sh"
+bash "$HOME/scripts/tether_alert.sh"
+```
+
+Then use your preferred scheduler. Standard Linux cron examples:
+
+```cron
+0 * * * * /home/yourusername/scripts/tether_price.sh
+*/2 * * * * /home/yourusername/scripts/tether_alert.sh
+```
+
+See [Linux documentation](Linux/README.md) and the detailed [USDT setup guide](Linux/usdt/README.md).
+
+## Notification Behavior
+
+- `tether_price.sh` sends a report every time it runs.
+- `tether_alert.sh` checks on every scheduled run but sends a buy alert only when the price changes from outside to inside the configured zone. It sends an exit message when the price later leaves that zone.
+- Telegram alerts can arrive while the computer display is locked or asleep only if the machine and scheduler are still running and network access remains available.
+- Desktop notifications require an active graphical user session. They may not appear while the computer is suspended, while the display session is unavailable, or when the scheduler lacks access to the desktop D-Bus session.
+
+## Security
+
+- Never commit a real bot token, chat ID, API key, or personal proxy credential.
+- Keep repository scripts on placeholder values.
+- Revoke and regenerate a Telegram token immediately if it is exposed publicly.
+- Restrict local configuration files with `chmod 600` when they contain secrets.
+
+## Troubleshooting
+
+1. Run the script manually and check its exit code.
+2. Verify the API and proxy are reachable.
+3. Confirm the Telegram bot token and chat ID.
+4. Confirm the scheduler service is active.
+5. Use absolute paths in scheduled commands.
+6. Check that `curl`, `python3`, and `notify-send` are available to the scheduler.
+7. Treat Telegram delivery and desktop notification delivery as separate channels: one can work while the other does not.
+
+This repository intentionally contains no license section or committed credentials.

@@ -1,22 +1,86 @@
-# Linux Implementations
+# Linux Implementation
 
-This directory contains the operating system-specific implementations for Linux. The focus is on leveraging native Linux tools like `cron` for scheduling and `libnotify` for system-level alerts.
+This directory contains the Linux-specific automation layer of the project.
 
-## 📂 Current Assets
-Currently, the following assets are implemented for Linux:
-- **USDT (Tether)**: Full monitoring suite including hourly reporters and threshold-based alerts. See [`Linux/usdt/README.md`](./usdt/README.md) for details.
+[راهنمای فارسی](README-fa.md)
 
-## 🛠️ Linux-Specific Approach
-For all assets in this directory, we follow a consistent architecture:
-1. **Shell Scripting**: Using `.sh` files for maximum compatibility and minimal overhead.
-2. **Automation**: Utilizing the system `crontab` to ensure the monitoring runs as a background daemon without requiring a persistent terminal session.
-3. **Notification System**:
-   - **Remote**: Integration with Telegram Bot API via `curl`.
-   - **Local**: Integration with `notify-send` to provide immediate visual feedback on the user's desktop.
+## Current Module
 
-## 🚀 Getting Started
-To deploy any asset from this directory:
-1. Copy the asset's scripts to a stable local directory (e.g., `~/scripts/`).
-2. Ensure scripts have executable permissions (`chmod +x`).
-3. Configure the API credentials within the scripts.
-4. Add the corresponding cron entries to your `crontab`.
+- [USDT monitor](usdt/README.md): scheduled price reports and state-aware buy-zone alerts.
+
+## Requirements
+
+Debian/Ubuntu example:
+
+```bash
+sudo apt update
+sudo apt install -y curl python3 libnotify-bin cron
+```
+
+Equivalent packages can be installed with your distribution's package manager.
+
+## Recommended File Location
+
+Keep executable copies in a stable user-owned directory:
+
+```bash
+mkdir -p "$HOME/scripts"
+cp usdt/tether_price.sh usdt/tether_alert.sh "$HOME/scripts/"
+chmod +x "$HOME/scripts/tether_price.sh" "$HOME/scripts/tether_alert.sh"
+```
+
+Scheduled commands should use absolute paths. Cron may not expand environment variables or use the same `PATH` as an interactive shell.
+
+## Standard Linux Cron
+
+Edit the current user's crontab:
+
+```bash
+crontab -e
+```
+
+Add:
+
+```cron
+0 * * * * /home/yourusername/scripts/tether_price.sh
+*/2 * * * * /home/yourusername/scripts/tether_alert.sh
+```
+
+Verify:
+
+```bash
+crontab -l
+systemctl status cron
+```
+
+A suspended computer does not execute ordinary scheduled jobs. Depending on the scheduler, missed jobs may run late after resume or may be skipped. Locking the screen is different from suspend: jobs usually continue while the screen is merely locked.
+
+## Desktop Notifications
+
+`notify-send` needs access to the active graphical desktop session. A command can succeed in a terminal yet fail silently from Cron if `DISPLAY`, `DBUS_SESSION_BUS_ADDRESS`, or the graphical session is unavailable. Telegram delivery does not depend on the desktop notification channel.
+
+For systems where desktop notifications from Cron are unreliable, consider a user-level `systemd` timer/service tied to the graphical user session. The Telegram notification remains the reliable remote channel.
+
+## Optional Hermes Scheduler
+
+This repository does not require Hermes Agent. If Hermes cron is used instead of system Cron, the Hermes Gateway must stay active:
+
+```bash
+hermes gateway install --start-now --start-on-login
+hermes gateway status
+hermes cron status
+```
+
+Use `no_agent` script jobs to avoid LLM calls. When the script itself sends Telegram messages, local scheduler delivery is sufficient; the script is the notification transport.
+
+## Operational Checklist
+
+- Scripts execute manually without errors.
+- Real credentials exist only in local copies, never in Git.
+- Proxy endpoint is running if configured.
+- Scheduler service is active.
+- Absolute paths are used.
+- The machine is awake at the scheduled time.
+- Telegram and desktop channels are tested separately.
+
+See the [USDT guide](usdt/README.md) for configuration, scheduling, testing, and troubleshooting details.

@@ -34,6 +34,9 @@ Ramzinex REST API
 
 ```text
 .
+├── docs/
+│   ├── telegram-bot-setup.md
+│   └── telegram-bot-setup-fa.md
 ├── Linux/
 │   ├── README.md
 │   ├── README-fa.md
@@ -57,24 +60,40 @@ Ramzinex REST API
 
 ## شروع سریع
 
+### ۱. کلون کردن مخزن
+
 ```bash
 git clone https://github.com/amiromumi/Automated-Price-Monitoring-System.git
-cd Automated-Price-Monitoring-System/Linux/usdt
+cd Automated-Price-Monitoring-System
+```
+
+### ۲. راه‌اندازی بات تلگرام
+
+پیش از استفاده از هر اسکریپتی، به توکن بات تلگرام و Chat ID نیاز دارید. [راهنمای راه‌اندازی بات تلگرام](docs/telegram-bot-setup-fa.md) را دنبال کنید (۵ دقیقه).
+
+### ۳. نصب و تنظیم
+
+```bash
+cd Linux/usdt
 mkdir -p "$HOME/scripts"
 cp tether_price.sh tether_alert.sh "$HOME/scripts/"
 chmod +x "$HOME/scripts/tether_price.sh" "$HOME/scripts/tether_alert.sh"
 ```
 
-در هر دو فایل کپی‌شده، مقادیر `YOUR_BOT_TOKEN` و `YOUR_CHAT_ID` را جایگزین کنید. اگر به پراکسی SOCKS نیاز ندارید، گزینه `--proxy "$PROXY"` را حذف یا تنظیمات پراکسی را متناسب با سیستم خود اصلاح کنید.
+در هر دو فایل کپی‌شده، مقادیر `YOUR_BOT_TOKEN` و `YOUR_CHAT_ID` را جایگزین کنید.
 
-پیش از زمان‌بندی، اجرای دستی را آزمایش کنید:
+### ۴. تست
 
 ```bash
 bash "$HOME/scripts/tether_price.sh"
 bash "$HOME/scripts/tether_alert.sh"
 ```
 
-سپس زمان‌بند دلخواه خود را تنظیم کنید. نمونه‌های Cron استاندارد لینوکس:
+### ۵. زمان‌بندی
+
+```bash
+crontab -e
+```
 
 ```cron
 0 * * * * /home/yourusername/scripts/tether_price.sh

@@ -28,33 +28,9 @@ sudo apt update
 sudo apt install -y curl python3 libnotify-bin cron
 ```
 
-## Telegram Bot Setup (One-Time, Before Anything Else)
+## Telegram Bot Setup
 
-The scripts need a Telegram bot and your personal chat ID. Create them once:
-
-### 1. Create the bot
-
-1. Open Telegram and search for **@BotFather** (verified, blue check).
-2. Send `/newbot`.
-3. Choose a display name (anything, e.g. `My Price Monitor`).
-4. Choose a username ending in `bot` (e.g. `my_price_monitor_bot`).
-5. BotFather replies with a **token** like `1234567890:AAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`. Copy and save it — this is your `BOT_TOKEN`.
-
-### 2. Get your chat ID
-
-1. In Telegram, search for **@userinfobot** and send it any message (e.g. `hi`).
-2. It replies with your account info. The number next to **Id** is your `CHAT_ID`.
-3. Important: open a conversation with your new bot and press **Start** (or send `/start`). A bot cannot message you until you have started it at least once.
-
-### 3. Verify the bot works (optional but recommended)
-
-```bash
-curl -s "https://api.telegram.org/botYOUR_BOT_TOKEN/sendMessage" \
-  -d "chat_id=YOUR_CHAT_ID" \
-  --data-urlencode "text=Test"
-```
-
-If the reply contains `"ok":true` and the test message arrives in Telegram, your credentials are correct. If Telegram is filtered on your network, add `--proxy socks5h://127.0.0.1:10808` (your own proxy address and port).
+Before using these scripts, you need a Telegram bot token and your chat ID. See the [Telegram Bot Setup Guide](../../docs/telegram-bot-setup.md) for a step-by-step walkthrough.
 
 ## Installation
 

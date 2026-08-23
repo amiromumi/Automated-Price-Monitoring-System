@@ -34,6 +34,9 @@ Bash scripts + Python JSON parsing
 
 ```text
 .
+├── docs/
+│   ├── telegram-bot-setup.md
+│   └── telegram-bot-setup-fa.md
 ├── Linux/
 │   ├── README.md
 │   ├── README-fa.md
@@ -57,24 +60,40 @@ Bash scripts + Python JSON parsing
 
 ## Quick Start
 
+### 1. Clone the repository
+
 ```bash
 git clone https://github.com/amiromumi/Automated-Price-Monitoring-System.git
-cd Automated-Price-Monitoring-System/Linux/usdt
+cd Automated-Price-Monitoring-System
+```
+
+### 2. Set up your Telegram bot
+
+Before using any script, you need a Telegram bot token and your chat ID. Follow the [Telegram Bot Setup Guide](docs/telegram-bot-setup.md) (5-minute walkthrough).
+
+### 3. Install and configure
+
+```bash
+cd Linux/usdt
 mkdir -p "$HOME/scripts"
 cp tether_price.sh tether_alert.sh "$HOME/scripts/"
 chmod +x "$HOME/scripts/tether_price.sh" "$HOME/scripts/tether_alert.sh"
 ```
 
-Edit both copied scripts and replace `YOUR_BOT_TOKEN` and `YOUR_CHAT_ID`. If no SOCKS proxy is required, remove the `--proxy "$PROXY"` option or adapt the proxy configuration.
+Edit both copied scripts and replace `YOUR_BOT_TOKEN` and `YOUR_CHAT_ID`.
 
-Test before scheduling:
+### 4. Test
 
 ```bash
 bash "$HOME/scripts/tether_price.sh"
 bash "$HOME/scripts/tether_alert.sh"
 ```
 
-Then use your preferred scheduler. Standard Linux cron examples:
+### 5. Schedule
+
+```bash
+crontab -e
+```
 
 ```cron
 0 * * * * /home/yourusername/scripts/tether_price.sh

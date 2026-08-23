@@ -41,6 +41,3 @@
    - برای هشدار محدوده خرید: خط `*/2 * * * * /home/yourusername/scripts/tether_alert.sh` را به `crontab -e` اضافه کنید.
 
 برای راهنمای کامل، لطفاً به فایل `Linux/usdt/README.md` مراجعه کنید.
-
-## ⚖️ لایسنس
-MIT License

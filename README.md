@@ -41,6 +41,3 @@ If you want to get the USDT monitor running quickly:
    - For buy-zone alerts: Add `*/2 * * * * /home/yourusername/scripts/tether_alert.sh` to your `crontab -e`.
 
 For a detailed guide, please refer to `Linux/usdt/README.md`.
-
-## ⚖️ License
-MIT License

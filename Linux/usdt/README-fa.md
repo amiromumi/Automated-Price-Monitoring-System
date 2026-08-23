@@ -28,17 +28,57 @@ sudo apt update
 sudo apt install -y curl python3 libnotify-bin cron
 ```
 
-## نصب
+## راه‌اندازی بات تلگرام (یک‌بار، قبل از هر کاری)
 
-از داخل همین پوشه اجرا کنید:
+اسکریپت‌ها به یک بات تلگرام و Chat ID شخصی شما نیاز دارند. این‌ها را یک‌بار بسازید:
+
+### ۱. ساخت بات
+
+۱. تلگرام را باز کنید و **@BotFather** را جستجو کنید (تیک آبی تأیید داشته باشد).
+۲. دستور `/newbot` را بفرستید.
+۳. یک نام نمایشی انتخاب کنید (هر چیزی، مثلاً `مانیتور قیمت من`).
+۴. یک نام کاربری که به `bot` ختم شود انتخاب کنید (مثلاً `my_price_monitor_bot`).
+۵. BotFather یک **توکن** مانند `1234567890:AAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx` می‌فرستد. آن را کپی و نگه دارید — این همان `BOT_TOKEN` شماست.
+
+### ۲. گرفتن Chat ID
+
+۱. در تلگرام، **@userinfobot** را جستجو کنید و هر پیامی (مثلاً `hi`) بفرستید.
+۲. این بات اطلاعات حساب شما را می‌فرستد. عدد کنار **Id** همان `CHAT_ID` شماست.
+۳. نکته مهم: با بات جدید خودتان یک گفت‌وگو باز کرده و دکمه **Start** را بزنید (یا `/start` بفرستید). بات تا زمانی که شما یک‌بار او را استارت نکرده باشید نمی‌تواند برایتان پیام بفرستد.
+
+### ۳. تست بات (اختیاری اما توصیه‌شده)
 
 ```bash
+curl -s "https://api.telegram.org/botYOUR_BOT_TOKEN/sendMessage" \
+  -d "chat_id=YOUR_CHAT_ID" \
+  --data-urlencode "text=Test"
+```
+
+اگر پاسخ شامل `"ok":true` بود و پیام تست در تلگرام رسید، اطلاعات شما درست است. اگر تلگرام روی شبکه شما فیلتر است، گزینه `--proxy socks5h://127.0.0.1:10808` را با آدرس و پورت پراکسی خودتان اضافه کنید.
+
+## نصب
+
+ابتدا ابزارهای لازم را نصب کنید، مخزن را Clone کرده و اسکریپت‌ها را کپی کنید:
+
+```bash
+# ۱. نصب پیش‌نیازها (Debian/Ubuntu؛ در توزیع‌های دیگر از Package Manager خود استفاده کنید)
+sudo apt update
+sudo apt install -y curl python3 libnotify-bin cron git
+
+# ۲. کلون کردن مخزن
+git clone https://github.com/amiromumi/Automated-Price-Monitoring-System.git
+cd Automated-Price-Monitoring-System/Linux/usdt
+
+# ۳. کپی اسکریپت‌ها به یک مسیر پایدار
 mkdir -p "$HOME/scripts"
 cp tether_price.sh tether_alert.sh "$HOME/scripts/"
+
+# ۴. اجرایی کردن اسکریپت‌ها
 chmod +x "$HOME/scripts/tether_price.sh" "$HOME/scripts/tether_alert.sh"
 ```
 
 اگر ممکن است پوشه Clone جابه‌جا یا حذف شود، فایل‌ها را مستقیماً از داخل آن زمان‌بندی نکنید. از مسیر پایداری مانند `$HOME/scripts` استفاده کنید.
+
 
 ## تنظیمات
 

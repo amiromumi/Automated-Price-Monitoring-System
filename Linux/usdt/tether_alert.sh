@@ -1,73 +1,72 @@
 #!/bin/bash
-# Monitor USDT/IRR price and alert when in buy zone
-# Runs every 2 minutes via cron job
 
 # --- CONFIGURATION ---
 BOT_TOKEN="YOUR_BOT_TOKEN"
 CHAT_ID="YOUR_CHAT_ID"
-PROXY="socks5h://127.0.0.1:10808" # Change or remove if not using proxy
+PROXY="http://127.0.0.1:10808" # Adjust if needed
 
-# Set your buy zone in Rials (Toman * 10)
-LOWER_BOUND=1800000   # Example: 180,000 Toman
-UPPER_BOUND=2000000   # Example: 200,000 Toman
-# ---------------------
+# Layered Buy Zones
+ZONE_GREEN_MAX=185000   # Aggressive Buy
+ZONE_YELLOW_MIN=187500  # Normal Buy
+ZONE_YELLOW_MAX=196500  # Normal Buy
+ZONE_RED_MIN=200000     # Overpriced / Stop Buy
 
-STATE_FILE="/tmp/.tether_alert_state"
+# Volatility Settings
+DROP_THRESHOLD=1.0      # Alert if price drops > 1% in last 10 mins
+DB_PATH="/home/amiromumi/Scripts/price_history.db"
+STATE_FILE="/home/amiromumi/Scripts/tether_alert.state"
 
-RESPONSE=$(curl -s --max-time 15 "https://publicapi.ramzinex.com/exchange/api/v1.0/exchange/pairs" 2>/dev/null)
+# --- FUNCTIONS ---
+send_msg() {
+    local msg="$1"
+    curl -s -x "$PROXY" "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
+        -d "chat_id=$CHAT_ID" -d "text=$msg" > /dev/null
+}
 
-if [ -z "$RESPONSE" ]; then
+# Initialize SQLite DB
+sqlite3 "$DB_PATH" "CREATE TABLE IF NOT EXISTS history (timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, price REAL);"
+
+# Get Current Price
+PRICE_JSON=$(curl -s -x "$PROXY" "https://api.ramzinex.com/api/tether")
+PRICE=$(echo "$PRICE_JSON" | python3 -c "import sys, json; print(json.load(sys.stdin)['buy'])")
+
+if [ -z "$PRICE" ]; then
+    echo "Error fetching price"
     exit 1
 fi
 
-PRICE_RIAL=$(echo "$RESPONSE" | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-for item in data.get('data', []):
-    if item.get('base_currency_symbol', {}).get('en') == 'usdt':
-        print(item.get('sell', 0))
-        break
-" 2>/dev/null)
+# Save to DB
+sqlite3 "$DB_PATH" "INSERT INTO history (price) VALUES ($PRICE);"
 
-if [ -z "$PRICE_RIAL" ] || [ "$PRICE_RIAL" = "0" ]; then
-    exit 1
+# 1. LAYERED ZONE LOGIC
+CURRENT_ZONE="NONE"
+if [ "$PRICE" -le "$ZONE_GREEN_MAX" ]; then
+    CURRENT_ZONE="GREEN"
+    MSG="🟢 فرصت طلایی! قیمت بسیار مناسب است.\n\n💵 قیمت فعلی: $PRICE تومان\n🎯 محدوده: زیر $ZONE_GREEN_MAX"
+elif [ "$PRICE" -ge "$ZONE_YELLOW_MIN" ] && [ "$PRICE" -le "$ZONE_YELLOW_MAX" ]; then
+    CURRENT_ZONE="YELLOW"
+    MSG="🟡 قیمت مناسب است، خرید تدریجی توصیه می‌شود.\n\n💵 قیمت فعلی: $PRICE تومان\n🎯 محدوده: $ZONE_YELLOW_MIN تا $ZONE_YELLOW_MAX"
+elif [ "$PRICE" -ge "$ZONE_RED_MIN" ]; then
+    CURRENT_ZONE="RED"
+    MSG="🔴 قیمت بالا رفته است. توقف خرید پیشنهاد می‌شود.\n\n💵 قیمت فعلی: $PRICE تومان\n🎯 هشدار: بالای $ZONE_RED_MIN"
 fi
 
-PRICE_TOMAN=$((PRICE_RIAL / 10))
-PRICE_FMT=$(printf "%'d" "$PRICE_TOMAN")
+# State management to avoid spam
+LAST_ZONE=$(cat "$STATE_FILE" 2>/dev/null)
+if [ "$CURRENT_ZONE" != "NONE" ] && [ "$CURRENT_ZONE" != "$LAST_ZONE" ]; then
+    send_msg "🚨 هشدار تغییر محدوده خرید 🚨\n\n$MSG\n\n🕐 $(date '+%H:%M:%S - %d/%m/%Y')"
+    echo "$CURRENT_ZONE" > "$STATE_FILE"
+fi
 
-if [ "$PRICE_RIAL" -ge "$LOWER_BOUND" ] && [ "$PRICE_RIAL" -le "$UPPER_BOUND" ]; then
-    if [ -f "$STATE_FILE" ]; then
-        LAST_STATE=$(cat "$STATE_FILE")
-        if [ "$LAST_STATE" = "IN_ZONE" ]; then
-            exit 0
-        fi
+# 2. VOLATILITY LOGIC (Drop detection)
+# Get price from 10 minutes ago
+OLD_PRICE=$(sqlite3 "$DB_PATH" "SELECT price FROM history WHERE timestamp <= datetime('now', '-10 minutes') ORDER BY timestamp DESC LIMIT 1;")
+
+if [ ! -z "$OLD_PRICE" ]; then
+    DIFF=$(python3 -c "print(($OLD_PRICE - $PRICE) / $OLD_PRICE * 100)")
+    IS_DROP=$(python3 -c "print(1 if $DIFF > $DROP_THRESHOLD else 0)")
+    
+    if [ "$IS_DROP" -eq 1 ]; then
+        send_msg "⚠️ هشدار ریزش سریع! ⚠️\n\nقیمت در ۱۰ دقیقه اخیر حدود $DIFF% سقوط کرده است.\n\n💵 قیمت فعلی: $PRICE تومان\n📉 قیمت ۱۰ دقیقه پیش: $OLD_PRICE تومان\n\nشاید بهتر باشد برای کف جدید کمی صبر کنید."
     fi
-
-    NOW=$(TZ='Asia/Tehran' date '+%H:%M:%S - %d/%m/%Y')
-    MSG=$(printf "🚨 هشدار خرید تتر 🚨\n\n✅ قیمت تتر وارد محدوده خرید شد!\n\n💵 قیمت فعلی: %s تومان\n🎯 محدوده خرید: %s تا %s تومان\n\n🕐 %s" "$PRICE_FMT" "$((LOWER_BOUND/10))" "$((UPPER_BOUND/10))" "$NOW")
-
-    curl -s --max-time 15 --proxy "$PROXY" \
-        "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-        -d "chat_id=${CHAT_ID}" \
-        --data-urlencode "text=${MSG}" \
-        > /dev/null 2>&1
-
-    notify-send -u critical "🚨 هشدار خرید تتر!" "قیمت: $PRICE_FMT تومان - در محدوده خرید" 2>/dev/null
-    echo "IN_ZONE" > "$STATE_FILE"
-else
-    if [ -f "$STATE_FILE" ]; then
-        LAST_STATE=$(cat "$STATE_FILE")
-        if [ "$LAST_STATE" = "IN_ZONE" ]; then
-            NOW=$(TZ='Asia/Tehran' date '+%H:%M:%S - %d/%m/%Y')
-            MSG=$(printf "ℹ️ قیمت تتر از محدوده خرید خارج شد\n\n💵 قیمت فعلی: %s تومان\n\n🕐 %s" "$PRICE_FMT" "$NOW")
-            curl -s --max-time 15 --proxy "$PROXY" \
-                "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-                -d "chat_id=${CHAT_ID}" \
-                --data-urlencode "text=${MSG}" \
-                > /dev/null 2>&1
-            notify-send "ℹ️ تتر خارج از محدوده خرید" "قیمت: $PRICE_FMT تومان" 2>/dev/null
-        fi
-    fi
-    echo "OUT" > "$STATE_FILE"
 fi

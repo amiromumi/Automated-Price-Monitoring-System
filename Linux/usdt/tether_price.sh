@@ -3,8 +3,8 @@
 # Runs hourly via cron job
 
 # --- CONFIGURATION ---
-BOT_TOKEN="YOUR_BOT_TOKEN"
-CHAT_ID="YOUR_CHAT_ID"
+BOT_TOKEN="8916468888:AAHYhCfqjDSNBpeyqGwdpmcLunk-9-kivXc"
+CHAT_ID="37413169"
 PROXY="socks5h://127.0.0.1:10808" # Change or remove if not using proxy
 # ---------------------
 

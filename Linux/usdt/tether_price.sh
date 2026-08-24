@@ -1,10 +1,14 @@
 #!/bin/bash
+# Fix for cron desktop notifications
+export DISPLAY=:0
+export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus
+
 # Fetch USDT/IRR price from Ramzinex and send to Telegram bot
 # Runs hourly via cron job
 
 # --- CONFIGURATION ---
-BOT_TOKEN="8916468888:AAHYhCfqjDSNBpeyqGwdpmcLunk-9-kivXc"
-CHAT_ID="37413169"
+BOT_TOKEN="YOUR_BOT_TOKEN"
+CHAT_ID="YOUR_CHAT_ID"
 PROXY="socks5h://127.0.0.1:10808" # Change or remove if not using proxy
 # ---------------------
 

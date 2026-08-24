@@ -1,4 +1,8 @@
 #!/bin/bash
+# Fix for cron desktop notifications
+export DISPLAY=:0
+export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus
+
 
 # --- CONFIGURATION ---
 BOT_TOKEN="YOUR_BOT_TOKEN"
@@ -24,7 +28,7 @@ send_msg() {
 }
 
 # Initialize SQLite DB
-sqlite3 "$DB_PATH" "CREATE TABLE IF NOT EXISTS history (timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, price REAL);"
+/usr/bin/sqlite3 "$DB_PATH" "CREATE TABLE IF NOT EXISTS history (timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, price REAL);"
 
 # Get Current Price
 PRICE_JSON=$(curl -s -x "$PROXY" "https://api.ramzinex.com/api/tether")
@@ -36,7 +40,7 @@ if [ -z "$PRICE" ]; then
 fi
 
 # Save to DB
-sqlite3 "$DB_PATH" "INSERT INTO history (price) VALUES ($PRICE);"
+/usr/bin/sqlite3 "$DB_PATH" "INSERT INTO history (price) VALUES ($PRICE);"
 
 # 1. LAYERED ZONE LOGIC
 CURRENT_ZONE="NONE"
@@ -60,7 +64,7 @@ fi
 
 # 2. VOLATILITY LOGIC (Drop detection)
 # Get price from 10 minutes ago
-OLD_PRICE=$(sqlite3 "$DB_PATH" "SELECT price FROM history WHERE timestamp <= datetime('now', '-10 minutes') ORDER BY timestamp DESC LIMIT 1;")
+OLD_PRICE=$(/usr/bin/sqlite3 "$DB_PATH" "SELECT price FROM history WHERE timestamp <= datetime('now', '-10 minutes') ORDER BY timestamp DESC LIMIT 1;")
 
 if [ ! -z "$OLD_PRICE" ]; then
     DIFF=$(python3 -c "print(($OLD_PRICE - $PRICE) / $OLD_PRICE * 100)")

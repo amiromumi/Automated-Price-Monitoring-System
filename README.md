@@ -1,36 +1,28 @@
 # Automated Price Monitoring System
 
-A lightweight, modular automation project for monitoring market prices and sending remote Telegram alerts plus local Linux desktop notifications. The current implementation tracks USDT/IRR using the Ramzinex public API and is structured so additional assets and operating systems can be added later.
+A professional-grade, modular automation project for monitoring market prices with advanced analysis and remote Telegram alerts.
 
 [راهنمای فارسی](README-fa.md)
 
-## Features
+## 🌟 Advanced Features
 
-- Live USDT buy/sell prices and 24-hour percentage change
-- Scheduled price reports
-- Configurable buy-zone monitoring
-- Telegram Bot API notifications
-- Linux desktop notifications through `notify-send`
-- State-based alert suppression to avoid repeated buy-zone messages
-- Lightweight Bash and Python implementation with no LLM dependency
-- Modular `operating-system/asset` directory layout
+- **Layered Buy Zones:** Multi-tier alerts (Aggressive, Normal, Stop) based on price levels.
+- **Volatility Detection:** Rapid drop alerts (e.g., >1% in 10 mins) to prevent FOMO and identify crashes.
+- **Daily Intelligence Report:** Automated summary at 17:00 daily including Min/Max/Avg prices and trend analysis.
+- **Historical Tracking:** SQLite-powered database for price history and trend calculations.
+- **Smart Suppression:** State-based alerts to avoid repeated messages for the same zone.
+- **Modular Architecture:** Easy to extend for different assets and OS.
 
-## Architecture
+## 🏗️ Architecture
 
 ```text
-Ramzinex REST API
-        |
-        v
-Bash scripts + Python JSON parsing
-        |
-        +--> Telegram Bot API (remote alert)
-        |
-        +--> notify-send (local desktop alert)
-        |
-        +--> local state file (duplicate-alert prevention)
+Ramzinex REST API --> Bash/Python Scripts --> SQLite DB (History)
+                                       |
+                                       +--> Telegram Bot API (Alerts/Reports)
+                                       +--> notify-send (Local Alerts)
 ```
 
-## Repository Structure
+## 📁 Repository Structure
 
 ```text
 .
@@ -43,7 +35,8 @@ Bash scripts + Python JSON parsing
 │   ├── README-fa.md
 │   └── usdt/
 │       ├── tether_price.sh   # Regular price report
-│       ├── tether_alert.sh   # Buy-zone transition monitor
+│       ├── tether_alert.sh   # Advanced Buy-Zone & Volatility monitor
+│       ├── tether_daily_report.sh # Daily intelligence summary
 │       ├── README.md
 │       └── README-fa.md
 ├── Windows/
@@ -56,65 +49,41 @@ Bash scripts + Python JSON parsing
 └── README-fa.md
 ```
 
-## Technology Stack
+## 🛠️ Technology Stack
 
-- Bash / Shell scripting
-- Python 3 for JSON parsing
-- `curl` for HTTP requests
-- Cron-compatible scheduling
-- Telegram Bot API
-- `libnotify` / `notify-send`
+- **Language:** Bash / Shell scripting
+- **Data Processing:** Python 3
+- **Database:** SQLite3 (for historical analysis)
+- **Networking:** `curl` / HTTP REST
+- **Scheduling:** Linux Cron
+- **Notifications:** Telegram Bot API / `libnotify`
 
-## Quick Start
+## 🚀 Quick Start
 
-### 1. Clone the repository
+### 1. Clone & Setup
 ```bash
 git clone https://github.com/amiromumi/Automated-Price-Monitoring-System.git
 cd Automated-Price-Monitoring-System
-```
-
-### 2. Set up your Telegram bot
-Before using any script, you need a Telegram bot token and your chat ID. Follow the [Telegram Bot Setup Guide](docs/telegram-bot-setup.md).
-
-### 3. Install and configure
-```bash
 cd Linux/usdt
 mkdir -p "$HOME/Scripts"
-cp tether_price.sh tether_alert.sh "$HOME/Scripts/"
-chmod +x "$HOME/Scripts/tether_price.sh" "$HOME/Scripts/tether_alert.sh"
-```
-Edit both copied scripts and replace `YOUR_BOT_TOKEN` and `YOUR_CHAT_ID`.
-
-### 4. Test
-```bash
-bash "$HOME/Scripts/tether_price.sh"
-bash "$HOME/Scripts/tether_alert.sh"
+cp *.sh "$HOME/Scripts/"
+chmod +x "$HOME/Scripts/"*.sh
 ```
 
-### 5. Schedule
-For detailed step-by-step instructions on setting up the schedule on Linux, please refer to the [Linux Cron Setup Guide](docs/LINUX_CRON_SETUP.md).
+### 2. Configuration
+Edit the scripts in `~/Scripts/` and replace `YOUR_BOT_TOKEN` and `YOUR_CHAT_ID`.
 
-## Notification Behavior
+### 3. Scheduling
+Refer to the [Linux Cron Setup Guide](docs/LINUX_CRON_SETUP.md) for detailed instructions.
 
-- `tether_price.sh` sends a report every time it runs.
-- `tether_alert.sh` checks on every scheduled run but sends a buy alert only when the price changes from outside to inside the configured zone. It sends an exit message when the price later leaves that zone.
-- Telegram alerts are delivered as long as the machine is powered and has network access.
-- Desktop notifications require an active graphical user session.
+## 📈 Notification Logic
 
-## Security
-
-- Never commit a real bot token, chat ID, API key, or personal proxy credential.
-- Keep repository scripts on placeholder values.
-- Revoke and regenerate a Telegram token immediately if it is exposed publicly.
-- Restrict local configuration files with `chmod 600` when they contain secrets.
-
-## Troubleshooting
-
-1. Run the script manually and check its exit code.
-2. Verify the API and proxy are reachable.
-3. Confirm the Telegram bot token and chat ID.
-4. Confirm the scheduler service is active.
-5. Use absolute paths in scheduled commands.
-6. Check that `curl`, `python3`, and `notify-send` are available to the scheduler.
+| Level | Condition | Action |
+|---|---|---|
+| **Green** | < 185,000 | 🟢 Aggressive Buy Alert |
+| **Yellow** | 187,500 - 196,500 | 🟡 Normal Buy Alert |
+| **Red** | > 200,000 | 🔴 Stop Buy Alert |
+| **Crash** | Drop > 1% in 10m | ⚠️ Volatility Warning |
+| **Daily** | 17:00 Daily | 📊 Market Summary Report |
 
 This repository intentionally contains no license section or committed credentials.

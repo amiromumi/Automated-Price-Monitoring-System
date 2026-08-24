@@ -36,7 +36,8 @@ Bash scripts + Python JSON parsing
 .
 ├── docs/
 │   ├── telegram-bot-setup.md
-│   └── telegram-bot-setup-fa.md
+│   ├── telegram-bot-setup-fa.md
+│   └── LINUX_CRON_SETUP.md       # Comprehensive guide for Linux scheduling
 ├── Linux/
 │   ├── README.md
 │   ├── README-fa.md
@@ -67,53 +68,38 @@ Bash scripts + Python JSON parsing
 ## Quick Start
 
 ### 1. Clone the repository
-
 ```bash
 git clone https://github.com/amiromumi/Automated-Price-Monitoring-System.git
 cd Automated-Price-Monitoring-System
 ```
 
 ### 2. Set up your Telegram bot
-
-Before using any script, you need a Telegram bot token and your chat ID. Follow the [Telegram Bot Setup Guide](docs/telegram-bot-setup.md) (5-minute walkthrough).
+Before using any script, you need a Telegram bot token and your chat ID. Follow the [Telegram Bot Setup Guide](docs/telegram-bot-setup.md).
 
 ### 3. Install and configure
-
 ```bash
 cd Linux/usdt
-mkdir -p "$HOME/scripts"
-cp tether_price.sh tether_alert.sh "$HOME/scripts/"
-chmod +x "$HOME/scripts/tether_price.sh" "$HOME/scripts/tether_alert.sh"
+mkdir -p "$HOME/Scripts"
+cp tether_price.sh tether_alert.sh "$HOME/Scripts/"
+chmod +x "$HOME/Scripts/tether_price.sh" "$HOME/Scripts/tether_alert.sh"
 ```
-
 Edit both copied scripts and replace `YOUR_BOT_TOKEN` and `YOUR_CHAT_ID`.
 
 ### 4. Test
-
 ```bash
-bash "$HOME/scripts/tether_price.sh"
-bash "$HOME/scripts/tether_alert.sh"
+bash "$HOME/Scripts/tether_price.sh"
+bash "$HOME/Scripts/tether_alert.sh"
 ```
 
 ### 5. Schedule
-
-```bash
-crontab -e
-```
-
-```cron
-0 * * * * /home/yourusername/scripts/tether_price.sh
-*/2 * * * * /home/yourusername/scripts/tether_alert.sh
-```
-
-See [Linux documentation](Linux/README.md) and the detailed [USDT setup guide](Linux/usdt/README.md).
+For detailed step-by-step instructions on setting up the schedule on Linux, please refer to the [Linux Cron Setup Guide](docs/LINUX_CRON_SETUP.md).
 
 ## Notification Behavior
 
 - `tether_price.sh` sends a report every time it runs.
 - `tether_alert.sh` checks on every scheduled run but sends a buy alert only when the price changes from outside to inside the configured zone. It sends an exit message when the price later leaves that zone.
-- Telegram alerts can arrive while the computer display is locked or asleep only if the machine and scheduler are still running and network access remains available.
-- Desktop notifications require an active graphical user session. They may not appear while the computer is suspended, while the display session is unavailable, or when the scheduler lacks access to the desktop D-Bus session.
+- Telegram alerts are delivered as long as the machine is powered and has network access.
+- Desktop notifications require an active graphical user session.
 
 ## Security
 
@@ -130,6 +116,5 @@ See [Linux documentation](Linux/README.md) and the detailed [USDT setup guide](L
 4. Confirm the scheduler service is active.
 5. Use absolute paths in scheduled commands.
 6. Check that `curl`, `python3`, and `notify-send` are available to the scheduler.
-7. Treat Telegram delivery and desktop notification delivery as separate channels: one can work while the other does not.
 
 This repository intentionally contains no license section or committed credentials.
